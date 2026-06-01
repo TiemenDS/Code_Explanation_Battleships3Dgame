@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>⚓ ZEESLAG — Code begrijpen in 1 uur</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#04101f; --bg2:#071e3d; --panel:rgba(8,26,48,.85); --panel2:rgba(13,40,72,.6);
+    --line:rgba(100,181,246,.22); --foam:#64b5f6; --water:#1e88e5; --gold:#ffca28;
+    --green:#66bb6a; --red:#ef5350; --hit:#ff6b35; --text:#dcebff; --text:#e3f2fd;
+    --dim:#7d97ad; --mono:'JetBrains Mono',ui-monospace,Menlo,Consolas,monospace;
+    --disp:'Rajdhani','Segoe UI',sans-serif;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    background:
+      radial-gradient(1200px 600px at 80% -10%, rgba(30,136,229,.18), transparent 60%),
+      radial-gradient(900px 500px at -10% 20%, rgba(255,202,40,.06), transparent 55%),
+      var(--bg);
+    color:var(--text); font-family:var(--mono); line-height:1.65;
+    -webkit-font-smoothing:antialiased;
+  }
+  ::selection{background:var(--gold);color:#04101f}
+
+  /* layout */
+  .wrap{max-width:980px;margin:0 auto;padding:0 20px}
+  header.hero{
+    padding:64px 0 40px; text-align:center; position:relative;
+    border-bottom:1px solid var(--line);
+    background:
+      repeating-linear-gradient(90deg,transparent 0 38px, rgba(100,181,246,.04) 38px 39px),
+      repeating-linear-gradient(0deg,transparent 0 38px, rgba(100,181,246,.04) 38px 39px);
+  }
+  .kicker{font-family:var(--mono);color:var(--gold);letter-spacing:.5em;font-size:.7rem;text-transform:uppercase}
+  h1{font-family:var(--disp);font-weight:700;font-size:clamp(2.4rem,7vw,4.4rem);letter-spacing:.04em;
+     background:linear-gradient(135deg,var(--foam),var(--gold));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;line-height:1;margin:.3rem 0}
+  .hero p{color:var(--dim);max-width:620px;margin:14px auto 0;font-size:.95rem}
+  .hero .meta{margin-top:22px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+  .pill{border:1px solid var(--line);border-radius:999px;padding:6px 14px;font-size:.72rem;color:var(--foam);background:var(--panel2)}
+
+  /* sticky nav */
+  nav.toc{position:sticky;top:0;z-index:50;background:rgba(4,16,31,.92);backdrop-filter:blur(8px);
+    border-bottom:1px solid var(--line);padding:10px 0}
+  nav.toc .wrap{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+  nav.toc a{color:var(--dim);text-decoration:none;font-size:.72rem;padding:5px 11px;border:1px solid transparent;border-radius:6px;letter-spacing:.05em}
+  nav.toc a:hover{color:var(--foam);border-color:var(--line);background:var(--panel2)}
+
+  section{padding:44px 0;border-bottom:1px solid rgba(100,181,246,.08)}
+  .secnum{font-family:var(--disp);font-size:.8rem;letter-spacing:.4em;color:var(--gold);text-transform:uppercase}
+  h2{font-family:var(--disp);font-weight:700;font-size:clamp(1.6rem,4vw,2.4rem);color:var(--foam);letter-spacing:.02em;margin:.15rem 0 .8rem}
+  h3{font-family:var(--disp);font-weight:600;font-size:1.25rem;color:var(--text);letter-spacing:.03em;margin:1.6rem 0 .5rem}
+  p{margin:.6rem 0;color:#cfe3f5}
+  strong{color:#fff}
+  .lead{font-size:1.05rem;color:#dcecfb}
+  a.inline{color:var(--gold);text-decoration:none;border-bottom:1px dotted var(--gold)}
+
+  /* cards */
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:20px 22px;margin:16px 0;
+    box-shadow:0 10px 30px rgba(0,0,0,.25), inset 0 1px 0 rgba(255,255,255,.03)}
+  .card.accent{border-left:3px solid var(--gold)}
+  .card.warn{border-left:3px solid var(--hit);background:rgba(255,107,53,.06)}
+  .card.ok{border-left:3px solid var(--green);background:rgba(102,187,106,.06)}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  @media(max-width:720px){.grid2{grid-template-columns:1fr}}
+
+  ul{margin:.5rem 0 .5rem 1.1rem}
+  li{margin:.3rem 0;color:#cfe3f5}
+  code{font-family:var(--mono);background:rgba(100,181,246,.12);color:#bfe0ff;padding:1px 6px;border-radius:4px;font-size:.86em}
+
+  /* code block */
+  .code{position:relative;background:#03101f;border:1px solid var(--line);border-radius:8px;margin:12px 0;overflow:hidden}
+  .code .bar{display:flex;align-items:center;gap:8px;padding:7px 12px;background:#06182e;border-bottom:1px solid var(--line);font-size:.7rem;color:var(--dim)}
+  .code .bar .dot{width:9px;height:9px;border-radius:50%}
+  .dot.r{background:#ef5350}.dot.y{background:#ffca28}.dot.g{background:#66bb6a}
+  .code .fname{margin-left:auto;color:var(--foam);letter-spacing:.1em}
+  pre{margin:0;padding:14px 16px;overflow-x:auto;font-size:.8rem;line-height:1.6}
+  pre code{background:none;padding:0;color:#cfe3f5}
+  .c-key{color:#ff9e64}.c-str{color:#9ece6a}.c-com{color:#5c7080;font-style:italic}.c-fn{color:#7dcfff}.c-num{color:#ffca28}
+
+  /* toggle button + collapsible */
+  .btn{font-family:var(--disp);font-weight:600;letter-spacing:.08em;text-transform:uppercase;font-size:.8rem;
+    cursor:pointer;border:1px solid var(--foam);color:var(--foam);background:linear-gradient(135deg,rgba(13,40,72,.8),rgba(21,101,192,.25));
+    padding:9px 18px;border-radius:6px;transition:.18s}
+  .btn:hover{background:linear-gradient(135deg,var(--water),#1e88e5);color:#fff;box-shadow:0 0 18px rgba(100,181,246,.4);transform:translateY(-1px)}
+  .btn:active{transform:translateY(0)}
+  .btn.gold{border-color:var(--gold);color:var(--gold)}
+  .btn.gold:hover{background:linear-gradient(135deg,#f9a825,#ffca28);color:#1a1a1a;box-shadow:0 0 18px rgba(255,202,40,.4)}
+  .btn.sm{padding:6px 13px;font-size:.72rem}
+
+  .reveal{max-height:0;overflow:hidden;transition:max-height .4s ease;border-left:2px solid var(--line);padding-left:0}
+  .reveal.open{max-height:2200px}
+  .reveal-inner{padding:10px 0 4px 16px}
+
+  /* flow demo */
+  .flow{display:grid;grid-template-columns:1fr 70px 1fr;gap:0;align-items:start;margin:14px 0}
+  .actor{text-align:center}
+  .actor .head{font-family:var(--disp);font-weight:700;letter-spacing:.1em;padding:8px;border:1px solid var(--line);border-radius:8px;background:var(--panel2)}
+  .actor.p1 .head{color:var(--foam)} .actor.srv .head{color:var(--gold)} 
+  .lane{min-height:340px;border-left:2px dashed rgba(100,181,246,.2);margin:8px auto 0;width:2px;position:relative}
+  .msgrow{display:grid;grid-template-columns:1fr 70px 1fr;gap:0;margin:0 0 6px;opacity:0;transform:translateY(6px);transition:.35s}
+  .msgrow.show{opacity:1;transform:none}
+  .bubble{font-size:.72rem;padding:7px 10px;border-radius:8px;border:1px solid var(--line);background:#06182e}
+  .bubble.toR{justify-self:start;border-color:rgba(100,181,246,.5);color:#bfe0ff}
+  .bubble.toL{justify-self:end;border-color:rgba(255,202,40,.5);color:#ffe9b0;text-align:right}
+  .arrow{align-self:center;text-align:center;color:var(--dim);font-size:1rem}
+  .flow-controls{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:6px}
+  .flow-note{font-size:.78rem;color:var(--dim);min-height:2.4em}
+
+  /* quiz */
+  .q{margin:14px 0;border:1px solid var(--line);border-radius:10px;padding:16px 18px;background:var(--panel)}
+  .q .qnum{font-family:var(--disp);color:var(--gold);font-size:.75rem;letter-spacing:.2em}
+  .q .qtext{font-weight:500;margin:4px 0 12px;color:#fff}
+  .opt{display:block;width:100%;text-align:left;font-family:var(--mono);font-size:.85rem;color:#cfe3f5;
+    background:var(--panel2);border:1px solid var(--line);border-radius:7px;padding:10px 13px;margin:7px 0;cursor:pointer;transition:.15s}
+  .opt:hover{border-color:var(--foam);background:rgba(100,181,246,.1)}
+  .opt.correct{border-color:var(--green);background:rgba(102,187,106,.18);color:#c8f0cb}
+  .opt.wrong{border-color:var(--red);background:rgba(239,83,80,.16);color:#ffd2d0}
+  .opt:disabled{cursor:default}
+  .qfb{font-size:.8rem;margin-top:8px;min-height:1.2em}
+  .qfb.good{color:var(--green)} .qfb.bad{color:var(--red)}
+  #score-bar{position:sticky;bottom:0;z-index:40;background:rgba(4,16,31,.95);backdrop-filter:blur(8px);
+    border-top:1px solid var(--line);padding:11px 0}
+  #score-bar .wrap{display:flex;align-items:center;gap:16px;flex-wrap:wrap;justify-content:space-between}
+  .scoretxt{font-family:var(--disp);letter-spacing:.1em;color:var(--foam)}
+  .scoretxt b{color:var(--gold);font-size:1.3rem}
+  .progress{flex:1;min-width:160px;height:8px;background:var(--panel2);border:1px solid var(--line);border-radius:99px;overflow:hidden}
+  .progress > div{height:100%;width:0;background:linear-gradient(90deg,var(--foam),var(--gold));transition:width .4s}
+
+  footer{padding:40px 0 80px;text-align:center;color:var(--dim);font-size:.78rem}
+  .tag{display:inline-block;font-size:.66rem;letter-spacing:.15em;color:var(--gold);border:1px solid var(--line);border-radius:5px;padding:2px 8px;margin-right:6px}
+  .hl{color:var(--gold)}
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <div class="kicker">Naval Command · Codeschool</div>
+    <h1>⚓ ZEESLAG — de code uitgelegd</h1>
+    <p>Begrijp <strong>de volledige code</strong> van het 3D-zeeslagspel binnen een uur. Klik de uitleg open, speel de berichtenstroom af en test jezelf met de oefeningen. Twee bestanden: <code>server.js</code> (de baas) en <code>index.html</code> (wat je ziet).</p>
+    <div class="meta">
+      <span class="pill">⏱️ ~60 min</span>
+      <span class="pill">🟢 Geen voorkennis nodig</span>
+      <span class="pill">🖱️ Knoppen &amp; oefeningen</span>
+      <span class="pill">🌐 Draait op GitHub Pages</span>
+    </div>
+  </div>
+</header>
+
+<nav class="toc">
+  <div class="wrap">
+    <a href="#overzicht">0 · Overzicht</a>
+    <a href="#stroom">1 · Berichtenstroom</a>
+    <a href="#server">2 · server.js</a>
+    <a href="#client">3 · index.html</a>
+    <a href="#concepten">4 · Sleutelconcepten</a>
+    <a href="#oefeningen">5 · Oefeningen</a>
+    <a href="#draaien">6 · Zelf draaien</a>
+  </div>
+</nav>
+
+<main class="wrap">
+
+<!-- ============ 0 OVERZICHT ============ -->
+<section id="overzicht">
+  <div class="secnum">Deel 0</div>
+  <h2>Het grote plaatje</h2>
+  <p class="lead">Het spel bestaat uit precies <strong>twee bestanden</strong> die met elkaar praten over het internet. Onthoud dit ene zinnetje en de helft is al duidelijk:</p>
+
+  <div class="card accent">
+    <p style="margin:0;font-size:1.05rem"><span class="hl">De server is de scheidsrechter, de browser is het speelveld.</span><br>
+    De server (<code>server.js</code>) bewaart de échte spelstand en beslist alles. De browser (<code>index.html</code>) toont mooie 3D-beelden en stuurt jouw acties door.</p>
+  </div>
+
+  <div class="grid2">
+    <div class="card">
+      <h3 style="margin-top:0">🧠 server.js — "de baas"</h3>
+      <ul>
+        <li>Draait op <strong>Node.js</strong> (buiten de browser).</li>
+        <li>Houdt bij: wie zit in welke <em>kamer</em>, waar staan de schepen, wiens beurt, wie won.</li>
+        <li>Beslist of een schot <strong>raak of mis</strong> is — de browser mag dat niet zelf bepalen (anders kun je vals spelen).</li>
+        <li>Stuurt updates naar <strong>beide</strong> spelers tegelijk.</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3 style="margin-top:0">🎨 index.html — "wat je ziet"</h3>
+      <ul>
+        <li>Draait in de <strong>browser</strong> van elke speler.</li>
+        <li>Tekent de 3D-oceaan en de schepen met <strong>Three.js</strong>.</li>
+        <li>Vangt je muisklikken op en stuurt ze als bericht naar de server.</li>
+        <li>Speelt geluiden, toont chat, scorebord en een verborgen debug-venster.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3 style="margin-top:0">De verbinding: een WebSocket</h3>
+    <p>Een gewone website vraagt een pagina op en is dan klaar. Een spel moet <strong>blijven praten</strong>: "ik schiet!", "raak!", "nu jouw beurt". Daarvoor gebruiken ze een <strong>WebSocket</strong> — een open telefoonlijn die in beide richtingen werkt zolang het spel duurt.</p>
+    <p>Alles wat over die lijn gaat is een klein <strong>JSON-pakketje</strong> met een <code>type</code>, bijvoorbeeld <code>{ "type": "fire", "row": 3, "col": 7 }</code>. De server kijkt naar het <code>type</code> en weet wat te doen.</p>
+    <button class="btn sm" data-toggle="ov1">Toon: waarom geen gewone HTTP?</button>
+    <div class="reveal" id="ov1"><div class="reveal-inner">
+      <p>Bij gewone HTTP moet de browser telkens opnieuw <em>vragen</em> ("is er al nieuws?"). Dat is traag en omslachtig voor een spel. Met een WebSocket kan de server uit zichzelf <em>"de tegenstander heeft geschoten op [3,7]"</em> doorduwen, op het moment dat het gebeurt. Eén keer verbinden, daarna blijft de lijn open.</p>
+    </div></div>
+  </div>
+</section>
+
+<!-- ============ 1 BERICHTENSTROOM ============ -->
+<section id="stroom">
+  <div class="secnum">Deel 1</div>
+  <h2>Speel de berichtenstroom af ▶</h2>
+  <p>Dit is dé kern van het hele spel. Klik op <strong>Volgende stap</strong> en zie precies welke pakketjes er heen en weer gaan tussen Speler 1, de Server en (impliciet) Speler 2. Lees onderaan steeds wat er gebeurt.</p>
+
+  <div class="card">
+    <div class="flow">
+      <div class="actor p1"><div class="head">🧑 SPELER 1<br>(browser)</div></div>
+      <div class="actor"><div style="font-size:.7rem;color:var(--dim);padding-top:14px">tijd ↓</div></div>
+      <div class="actor srv"><div class="head">🛰️ SERVER<br>(server.js)</div></div>
+    </div>
+    <div id="flow-lane"></div>
+    <p class="flow-note" id="flow-note">Klik op <strong>Volgende stap</strong> om te beginnen met verbinden.</p>
+    <div class="flow-controls">
+      <button class="btn gold" id="flow-next">▶ Volgende stap</button>
+      <button class="btn sm" id="flow-reset">↺ Opnieuw</button>
+      <span style="font-size:.75rem;color:var(--dim)">Stap <b id="flow-step" style="color:var(--foam)">0</b> / 8</span>
+    </div>
+  </div>
+  <p style="font-size:.8rem;color:var(--dim)">💡 Merk op: na een <em>misser</em> wisselt de beurt; na een <em>treffer</em> mag dezelfde speler nog eens. Dat staat in de <code>fire</code>-afhandeling op de server.</p>
+</section>
+
+<!-- ============ 2 SERVER ============ -->
+<section id="server">
+  <div class="secnum">Deel 2</div>
+  <h2>server.js — blok voor blok</h2>
+  <p class="lead">~270 regels, maar het valt uiteen in 7 begrijpelijke stukken. Open telkens de uitleg.</p>
+
+  <h3>2.1 · Opstarten &amp; gereedschap</h3>
+  <div class="code"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="fname">server.js</span></div><pre><code><span class="c-key">const</span> express = <span class="c-fn">require</span>(<span class="c-str">'express'</span>);   <span class="c-com">// mini-webserver</span>
+<span class="c-key">const</span> WebSocket = <span class="c-fn">require</span>(<span class="c-str">'ws'</span>);     <span class="c-com">// open telefoonlijn</span>
+<span class="c-key">const</span> server = http.<span class="c-fn">createServer</span>(app);
+<span class="c-key">const</span> wss = <span class="c-key">new</span> WebSocket.<span class="c-fn">Server</span>({ server });
+<span class="c-key">const</span> PORT = <span class="c-num">3000</span>;</code></pre></div>
+  <button class="btn sm" data-toggle="s1">Toon uitleg</button>
+  <div class="reveal" id="s1"><div class="reveal-inner">
+    <p>Hier worden de drie hulpmiddelen ingeladen: <code>express</code> serveert de HTML-bestanden, <code>ws</code> regelt de WebSocket-lijn, en die twee delen samen <strong>poort 3000</strong>. Onthoud: <strong>poort 3000</strong> = het adres waarop het spel luistert.</p>
+  </div></div>
+
+  <h3>2.2 · Het geheugen: rooms &amp; connections</h3>
+  <div class="code"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="fname">server.js</span></div><pre><code><span class="c-key">let</span> rooms = {};          <span class="c-com">// alle spelkamers</span>
+<span class="c-key">let</span> connections = {};    <span class="c-com">// alle verbonden browsers</span>
+
+<span class="c-key">function</span> <span class="c-fn">createRoom</span>(id){
+  <span class="c-key">return</span> {
+    id, players: [], phase: <span class="c-str">'waiting'</span>,
+    boards: { 0: <span class="c-fn">createEmptyBoard</span>(), 1: <span class="c-fn">createEmptyBoard</span>() },
+    shots: { 0: [], 1: [] }, currentTurn: <span class="c-num">0</span>, winner: <span class="c-key">null</span>
+  };
+}</code></pre></div>
+  <button class="btn sm" data-toggle="s2">Toon uitleg</button>
+  <div class="reveal" id="s2"><div class="reveal-inner">
+    <p>De server onthoudt alles in twee grote objecten. Een <strong>kamer</strong> heeft twee spelers (0 en 1), twee speelborden (10×10 raster vol nullen), de lijst met afgevuurde schoten, wiens beurt het is, en een <code>phase</code>. Die fase is een soort stoplicht en doorloopt: <code>waiting → placing → battle → gameover</code>. Bijna elke regel code controleert eerst: "zitten we wel in de juiste fase?"</p>
+  </div></div>
+
+  <h3>2.3 · De schepen &amp; de spelregels</h3>
+  <div class="code"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="fname">server.js</span></div><pre><code><span class="c-key">const</span> SHIPS = [
+  { name:<span class="c-str">'Carrier'</span>, size:<span class="c-num">5</span> }, { name:<span class="c-str">'Battleship'</span>, size:<span class="c-num">4</span> },
+  { name:<span class="c-str">'Cruiser'</span>, size:<span class="c-num">3</span> }, { name:<span class="c-str">'Submarine'</span>, size:<span class="c-num">3</span> },
+  { name:<span class="c-str">'Destroyer'</span>, size:<span class="c-num">2</span> },
+]; <span class="c-com">// 5+4+3+3+2 = 17 vakjes</span>
+
+<span class="c-fn">validatePlacement</span>(board, ships)  <span class="c-com">// liggen ze legaal? (binnen rand, niet overlappend)</span>
+<span class="c-fn">checkSunk</span>(shipCells, shots)       <span class="c-com">// is dit schip helemaal geraakt?</span>
+<span class="c-fn">checkWin</span>(shipCells, shots)        <span class="c-com">// zijn ALLE schepen geraakt?</span></code></pre></div>
+  <button class="btn sm" data-toggle="s3">Toon uitleg</button>
+  <div class="reveal" id="s3"><div class="reveal-inner">
+    <p>Vijf schepen, samen <strong>17 vakjes</strong> — daarom zie je in het spel "Treffers: 0 / 17". Je wint zodra je 17 keer raak schiet. De drie functies zijn de scheidsrechtersregels: <code>validatePlacement</code> weigert schepen die buiten het bord vallen of elkaar overlappen, <code>checkSunk</code> kijkt of álle vakjes van één schip geraakt zijn (= gezonken), en <code>checkWin</code> kijkt of de hele vloot weg is.</p>
+  </div></div>
+
+  <h3>2.4 · Iemand verbindt</h3>
+  <div class="code"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="fname">server.js</span></div><pre><code>wss.<span class="c-fn">on</span>(<span class="c-str">'connection'</span>, (ws, req) => {
+  <span class="c-key">const</span> cid = ++connectionId;          <span class="c-com">// uniek nummer per browser</span>
+  connections[cid] = { ws, room:<span class="c-key">null</span>, player:<span class="c-key">null</span> };
+  ws.<span class="c-fn">on</span>(<span class="c-str">'message'</span>, raw => <span class="c-fn">handleMessage</span>(cid, JSON.<span class="c-fn">parse</span>(raw), ws));
+  ws.<span class="c-fn">on</span>(<span class="c-str">'close'</span>, () => { <span class="c-com">/* speler vertrok → opruimen na 30s */</span> });
+});</code></pre></div>
+  <button class="btn sm" data-toggle="s4">Toon uitleg</button>
+  <div class="reveal" id="s4"><div class="reveal-inner">
+    <p>Telkens als een browser verbindt, krijgt die een uniek <code>cid</code> (connection-id) en wordt onthouden. Komt er een bericht binnen, dan gaat het naar <code>handleMessage</code> — het kloppende hart. Sluit iemand het tabblad, dan wordt de tegenstander gewaarschuwd en de kamer na 30 seconden opgeruimd als ze leeg blijft.</p>
+  </div></div>
+
+  <h3>2.5 · Het kloppende hart: handleMessage</h3>
+  <p>Dit is één grote <code>switch</code> die op het <code>type</code> van het bericht reageert. Elk <code>case</code> is één spelactie:</p>
+  <div class="code"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="fname">server.js · handleMessage()</span></div><pre><code><span class="c-key">switch</span> (msg.type) {
+  <span class="c-key">case</span> <span class="c-str">'joinRoom'</span>:  <span class="c-com">// speler bij kamer voegen (max 2)</span>
+  <span class="c-key">case</span> <span class="c-str">'placeShips'</span>:<span class="c-com">// schepen controleren &amp; opslaan</span>
+  <span class="c-key">case</span> <span class="c-str">'fire'</span>:      <span class="c-com">// schot: raak/mis bepalen, beurt regelen</span>
+  <span class="c-key">case</span> <span class="c-str">'chat'</span>:      <span class="c-com">// berichtje doorsturen</span>
+  <span class="c-key">case</span> <span class="c-str">'rematch'</span>:   <span class="c-com">// nog een potje</span>
+  <span class="c-key">case</span> <span class="c-str">'getDebug'</span>:  <span class="c-com">// geheime debug-info (sleutel: 'konami')</span>
+}</code></pre></div>
+  <button class="btn sm" data-toggle="s5">Toon uitleg per case</button>
+  <div class="reveal" id="s5"><div class="reveal-inner">
+    <ul>
+      <li><strong>joinRoom</strong> — Maakt de kamer aan als die nog niet bestaat. Vol (2 spelers)? Dan een <code>error</code> terug. Bij de tweede speler springt de fase naar <code>placing</code>.</li>
+      <li><strong>placeShips</strong> — Controleert de plaatsing met <code>validatePlacement</code>. Pas als <em>beide</em> spelers klaar zijn, gaat de fase naar <code>battle</code>.</li>
+      <li><strong>fire</strong> — Het belangrijkste. Eerst: is het wel jouw beurt? Al op dat vakje geschoten? Dan kijkt de server op het bord van de tegenstander of er een schip ligt → <code>hit</code> ja/nee → controleert gezonken/gewonnen → en stuurt het resultaat naar iedereen. Bij mis wisselt de beurt.</li>
+      <li><strong>chat</strong> — Knipt het bericht af op 200 tekens en stuurt het rond.</li>
+      <li><strong>rematch</strong> — Reset de kamer als beide spelers opnieuw willen.</li>
+      <li><strong>getDebug</strong> — Geeft interne info terug, máár alleen met de sleutel <code>'konami'</code>.</li>
+    </ul>
+  </div></div>
+
+  <h3>2.6 · Naar iedereen tegelijk praten: broadcast</h3>
+  <div class="code"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="fname">server.js</span></div><pre><code><span class="c-key">function</span> <span class="c-fn">broadcast</span>(room, msg){
+  <span class="c-key">const</span> data = JSON.<span class="c-fn">stringify</span>(msg);
+  Object.<span class="c-fn">values</span>(connections).<span class="c-fn">forEach</span>(conn => {
+    <span class="c-key">if</span> (conn.room === room.id &amp;&amp; conn.ws.readyState === WebSocket.OPEN)
+      conn.ws.<span class="c-fn">send</span>(data);            <span class="c-com">// stuur naar beide spelers</span>
+  });
+}</code></pre></div>
+  <button class="btn sm" data-toggle="s6">Toon uitleg</button>
+  <div class="reveal" id="s6"><div class="reveal-inner">
+    <p>Veel berichten (zoals "schot raak op [3,7], nu beurt van speler 1") moeten naar <strong>allebei</strong> de spelers. <code>broadcast</code> loopt alle open verbindingen af die in dezelfde kamer zitten en stuurt het JSON-pakket. Zo zien beide schermen tegelijk hetzelfde.</p>
+    <p style="color:var(--dim)">💡 In het echte bestand staat hierboven nog een onafgemaakte lus met een <code>// Find by cid...</code>-commentaar — dat is dode code die niets doet; de werkende versie is het stuk hierboven.</p>
+  </div></div>
+
+  <h3>2.7 · De deur openzetten</h3>
+  <div class="code"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="fname">server.js</span></div><pre><code>app.<span class="c-fn">use</span>(express.<span class="c-fn">static</span>(path.<span class="c-fn">join</span>(__dirname, <span class="c-str">'public'</span>)));
+server.<span class="c-fn">listen</span>(<span class="c-num">3000</span>, <span class="c-str">'0.0.0.0'</span>, () => <span class="c-fn">log</span>(<span class="c-str">'🚢 draait op poort 3000'</span>));</code></pre></div>
+  <button class="btn sm" data-toggle="s7">Toon uitleg</button>
+  <div class="reveal" id="s7"><div class="reveal-inner">
+    <p>De laatste twee regels zetten het geheel aan: serveer de bestanden uit de map <code>public</code>, en luister op poort 3000 op <code>0.0.0.0</code> (= "alle netwerk­adressen", zodat ook een tweede pc in hetzelfde wifi-netwerk kan verbinden). Vanaf nu draait de server.</p>
+  </div></div>
+</section>
+
+<!-- ============ 3 CLIENT ============ -->
+<section id="client">
+  <div class="secnum">Deel 3</div>
+  <h2>index.html — blok voor blok</h2>
+  <p class="lead">Eén groot bestand met drie lagen: <strong>CSS</strong> (uiterlijk), <strong>HTML</strong> (de schermen) en <strong>JavaScript</strong> (het brein). Het JS is opgebouwd uit drie "klassen" + opstartcode.</p>
+
+  <h3>3.1 · CSS — het uiterlijk</h3>
+  <button class="btn sm" data-toggle="c1">Toon uitleg</button>
+  <div class="reveal" id="c1"><div class="reveal-inner">
+    <p>Bovenaan in <code>&lt;style&gt;</code> staan <strong>kleurvariabelen</strong> (<code>--ocean-deep</code>, <code>--foam</code>, <code>--gold</code>…) zodat overal dezelfde marine-kleuren gebruikt worden. Daarna styling voor: de <em>schermen</em> (menu, wachten, game-over), de <em>HUD</em> (de hoekpanelen tijdens het spel), de <em>minikaartjes</em>, de <em>chat</em>, de <em>meldingen</em> ("RAAK!"), en het groene <em>debug-venster</em>. Je hoeft de CSS niet regel voor regel te snappen — weet gewoon: dit is puur het uiterlijk.</p>
+  </div></div>
+
+  <h3>3.2 · HTML — de schermen die aan/uit gaan</h3>
+  <div class="code"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="fname">index.html</span></div><pre><code>&lt;div class=<span class="c-str">"screen"</span> id=<span class="c-str">"screen-menu"</span>&gt;        <span class="c-com">// IP + kamer invullen</span>
+&lt;div class=<span class="c-str">"screen hidden"</span> id=<span class="c-str">"screen-waiting"</span>&gt;  <span class="c-com">// wachten op speler 2</span>
+&lt;div class=<span class="c-str">"screen hidden"</span> id=<span class="c-str">"screen-gameover"</span>&gt; <span class="c-com">// gewonnen/verloren</span>
+&lt;div id=<span class="c-str">"hud"</span>&gt; ... &lt;div id=<span class="c-str">"canvas-container"</span>&gt; <span class="c-com">// het 3D-beeld</span></code></pre></div>
+  <button class="btn sm" data-toggle="c2">Toon uitleg</button>
+  <div class="reveal" id="c2"><div class="reveal-inner">
+    <p>Alle schermen bestaan tegelijk in de pagina; er wordt steeds maar één getoond door de class <code>hidden</code> toe te voegen/weg te halen (functie <code>showScreen()</code>). Daaronder ligt de <code>canvas-container</code> waar Three.js de 3D-wereld in tekent. De HUD-hoeken (speler, kamer, beurt, treffers, besturing) zweven daar bovenop.</p>
+  </div></div>
+
+  <h3>3.3 · JavaScript-brein, deel A — AudioEngine</h3>
+  <button class="btn sm" data-toggle="c3">Toon uitleg</button>
+  <div class="reveal" id="c3"><div class="reveal-inner">
+    <p>De klasse <code>AudioEngine</code> maakt <strong>alle geluiden zelf</strong> met de Web Audio API — er zijn geen geluidsbestanden. Een functie <code>note()</code> genereert een toon, <code>noise()</code> maakt geruis. Daarmee worden <code>playExplosion()</code>, <code>playMiss()</code>, <code>playSunk()</code>, enz. samengesteld. Knap: een hele soundtrack uit pure wiskunde.</p>
+  </div></div>
+
+  <h3>3.4 · JavaScript-brein, deel B — Scene3D</h3>
+  <div class="code"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="fname">index.html · class Scene3D</span></div><pre><code><span class="c-fn">init</span>()        <span class="c-com">// camera, licht, oceaan, twee 10×10 rasters</span>
+<span class="c-fn">updateHover</span>() <span class="c-com">// welk vakje wijst de muis aan? (raycasting)</span>
+<span class="c-fn">handleClick</span>() <span class="c-com">// klik → schip plaatsen OF schieten</span>
+<span class="c-fn">addShipMesh</span>() / <span class="c-fn">addShotMarker</span>() / <span class="c-fn">spawnExplosionParticles</span>()
+<span class="c-fn">animate</span>()     <span class="c-com">// 60x per seconde opnieuw tekenen (golven!)</span></code></pre></div>
+  <button class="btn sm" data-toggle="c4">Toon uitleg</button>
+  <div class="reveal" id="c4"><div class="reveal-inner">
+    <p><code>Scene3D</code> is de hele 3D-wereld. Het bouwt de oceaan en twee borden (jouw kant links, vijand rechts). Met <strong>raycasting</strong> schiet het een onzichtbare straal vanaf de muis de scène in om te weten welk vakje je aanwijst. <code>handleClick()</code> vertaalt een klik naar een actie afhankelijk van de modus (<em>plaatsen</em> of <em>schieten</em>). <code>animate()</code> draait continu en laat het water golven en explosies opbloeien.</p>
+    <p style="color:var(--dim)">💡 Three.js wordt geladen via <code>&lt;script src="three.min.js"&gt;</code>. Dat bestand moet er dus náást staan, anders blijft het scherm zwart.</p>
+  </div></div>
+
+  <h3>3.5 · JavaScript-brein, deel C — Game (de regisseur)</h3>
+  <div class="code"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="fname">index.html · class Game</span></div><pre><code><span class="c-fn">connect</span>(addr, room)  <span class="c-com">// open de WebSocket naar ws://IP:3000</span>
+<span class="c-fn">send</span>(msg)            <span class="c-com">// stuur een JSON-pakketje naar de server</span>
+<span class="c-fn">handleMessage</span>(msg)   <span class="c-com">// REAGEER op berichten van de server</span>
+<span class="c-fn">fire</span>(row,col) / <span class="c-fn">confirmPlacement</span>() / <span class="c-fn">renderMiniGrids</span>()</code></pre></div>
+  <button class="btn sm" data-toggle="c5">Toon uitleg</button>
+  <div class="reveal" id="c5"><div class="reveal-inner">
+    <p><code>Game</code> is de tegenhanger van de server in de browser. <code>connect()</code> opent de lijn: let op de slimme regel <code>const proto = location.protocol === 'https:' ? 'wss' : 'ws'</code> — beveiligde pagina's eisen een beveiligde socket. <code>handleMessage()</code> is een <code>switch</code> die spiegelt wat de server stuurt: <code>joined</code>, <code>phase</code>, <code>fireResult</code>, <code>chat</code>, … en past het scherm aan. Zie je het patroon? <strong>Server en client hebben allebei een handleMessage met dezelfde berichttypes</strong> — dat is het hele "protocol".</p>
+  </div></div>
+
+  <h3>3.6 · De opstartcode &amp; knoppen</h3>
+  <button class="btn sm" data-toggle="c6">Toon uitleg</button>
+  <div class="reveal" id="c6"><div class="reveal-inner">
+    <p>Onderaan, in <code>window.addEventListener('load', …)</code>, worden alle knoppen gekoppeld: VERBINDEN, ROTEER, BEVESTIGEN, chat versturen, rematch. Ook de <strong>sneltoetsen</strong> zitten hier: <code>C</code>=chat, <code>Tab</code>=ander camerastandpunt, <code>F1</code>=debug. En een eierei: de <strong>Konami-code</strong> (↑↑↓↓←→←→ B A) opent automatisch het debug-venster.</p>
+  </div></div>
+</section>
+
+<!-- ============ 4 CONCEPTEN ============ -->
+<section id="concepten">
+  <div class="secnum">Deel 4</div>
+  <h2>Vijf sleutelconcepten</h2>
+  <p>Snap je deze vijf, dan snap je de code. Lees ze, dan zijn de oefeningen makkelijk.</p>
+
+  <div class="card"><h3 style="margin-top:0">① Client–server &amp; "single source of truth"</h3>
+  <p>De échte spelstand bestaat maar op één plek: de server. De browser is "dom" — hij toont wat de server zegt. Daarom kan een speler niet vals spelen door zijn eigen scherm te hacken.</p></div>
+
+  <div class="card"><h3 style="margin-top:0">② Het berichtenprotocol (JSON + type)</h3>
+  <p>Elk bericht is JSON met een <code>type</code>. Server én client hebben een <code>switch (msg.type)</code> die ze allebei begrijpen. Dezelfde namen aan beide kanten = afgesproken taal.</p></div>
+
+  <div class="card"><h3 style="margin-top:0">③ State machine: de phase</h3>
+  <p><code>waiting → placing → battle → gameover</code>. Bijna elke functie checkt eerst de fase. Het voorkomt onzin zoals schieten tijdens het plaatsen.</p></div>
+
+  <div class="card"><h3 style="margin-top:0">④ Het rooster als data: 10×10 array</h3>
+  <p>Een bord is gewoon <code>Array(10) × Array(10)</code> vol nullen. <code>0</code> = leeg, een scheepsnaam = schip ligt hier. Schieten = kijken of <code>board[row][col] !== 0</code>.</p></div>
+
+  <div class="card warn"><h3 style="margin-top:0">⑤ "Beveiliging" die geen beveiliging is</h3>
+  <p>De debug-sleutel <code>'konami'</code> staat <strong>letterlijk in de code</strong>. Iedereen die het bestand opent ziet hem. Het is een leuk eierei, geen echte beveiliging — een goede les over wat wél en níét veilig is.</p></div>
+</section>
+
+<!-- ============ 5 OEFENINGEN ============ -->
+<section id="oefeningen">
+  <div class="secnum">Deel 5</div>
+  <h2>Oefeningen — test jezelf 🎯</h2>
+  <p>Klik het antwoord dat je denkt. Je krijgt meteen feedback en je score telt onderaan mee.</p>
+  <div id="quiz"></div>
+  <div id="quiz-final" class="card ok" style="display:none">
+    <h3 style="margin-top:0" id="final-title"></h3>
+    <p id="final-text"></p>
+    <button class="btn gold" id="quiz-again">↺ Opnieuw proberen</button>
+  </div>
+</section>
+
+<!-- ============ 6 DRAAIEN ============ -->
+<section id="draaien">
+  <div class="secnum">Deel 6</div>
+  <h2>Dit op GitHub Pages &amp; het spel zelf draaien</h2>
+
+  <div class="card ok">
+    <h3 style="margin-top:0">✅ Wat WEL op GitHub Pages werkt</h3>
+    <p><strong>Deze leerpagina.</strong> Het is puur statische HTML/CSS/JS. Upload het bestand naar je repo en zet GitHub Pages aan (Settings → Pages). Wil je dat dit je homepagina is, hernoem het dan naar <code>index.html</code>. Iedereen kan dan via de link de code leren begrijpen.</p>
+  </div>
+
+  <div class="card warn">
+    <h3 style="margin-top:0">⛔ Wat NIET op GitHub Pages werkt</h3>
+    <p>Het <strong>spel zelf</strong>. GitHub Pages draait alléén bestanden — geen Node.js-programma's. <code>server.js</code> kan er dus niet draaien, en zonder server is er geen WebSocket om naartoe te verbinden. De spelpagina laadt wel, maar "VERBINDEN" mislukt.</p>
+  </div>
+
+  <div class="card">
+    <h3 style="margin-top:0">▶ Zo speel je het spel wél (lokaal of LAN)</h3>
+    <div class="code"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="fname">terminal</span></div><pre><code><span class="c-com"># 1. Node.js installeren (nodejs.org), daarna:</span>
+npm install express ws
+
+<span class="c-com"># 2. Zet index.html + three.min.js in een map 'public/'</span>
+<span class="c-com">#    en server.js ernaast. Dan:</span>
+node server.js
+
+<span class="c-com"># 3. Open in de browser:</span>
+http://localhost:3000
+<span class="c-com"># Tweede speler op zelfde wifi: http://JOUW-IP:3000</span></code></pre></div>
+    <p style="color:var(--dim)">Wil je tóch online tegen elkaar spelen, dan heb je een host nodig die Node.js draait (bijv. Render, Railway, Fly.io of een eigen VPS) — niet GitHub Pages.</p>
+  </div>
+</section>
+
+</main>
+
+<div id="score-bar">
+  <div class="wrap">
+    <span class="scoretxt">SCORE <b id="score-num">0</b> / <span id="score-max">0</span></span>
+    <div class="progress"><div id="score-fill"></div></div>
+    <span style="font-size:.72rem;color:var(--dim)" id="score-hint">Maak de oefeningen onderaan →</span>
+  </div>
+</div>
+
+<footer>
+  <div class="wrap">
+    <span class="tag">⚓ ZEESLAG 3D</span><span class="tag">server.js</span><span class="tag">index.html</span>
+    <p style="margin-top:14px">Leerpagina — open de uitlegblokken, speel de berichtenstroom af, doe de oefeningen. Veel plezier met de code! 🚢</p>
+  </div>
+</footer>
+
+<script>
+/* ---------- collapsibles ---------- */
+document.querySelectorAll('[data-toggle]').forEach(function(btn){
+  btn.addEventListener('click', function(){
+    var el = document.getElementById(btn.getAttribute('data-toggle'));
+    var open = el.classList.toggle('open');
+    btn.textContent = btn.textContent.replace(/^(Toon|Verberg)/, open ? 'Verberg' : 'Toon');
+  });
+});
+
+/* ---------- message flow demo ---------- */
+var FLOW = [
+  { side:'R', text:'{ type:"joinRoom", room:"slagveld-1" }', note:'Speler 1 vult IP + kamer in en klikt VERBINDEN. De browser opent de WebSocket en stuurt joinRoom.' },
+  { side:'L', text:'{ type:"joined", player:0, ships:[...] }', note:'De server maakt de kamer aan en zegt: "jij bent speler 0". Speler 1 belandt op het wachtscherm.' },
+  { side:'L', text:'{ type:"phase", phase:"placing" }', note:'Zodra speler 2 ook binnen is, springt de fase naar PLACING. Beide spelers mogen nu schepen plaatsen.' },
+  { side:'R', text:'{ type:"placeShips", ships:[5 schepen] }', note:'Speler 1 bevestigt de plaatsing. De server controleert ze met validatePlacement().' },
+  { side:'L', text:'{ type:"phase", phase:"battle", currentTurn:0 }', note:'Beide spelers klaar → fase BATTLE. Speler 0 mag beginnen.' },
+  { side:'R', text:'{ type:"fire", row:3, col:7 }', note:'Speler 1 klikt op een vijandelijk vakje. De server kijkt op het bord van de tegenstander.' },
+  { side:'L', text:'{ type:"fireResult", hit:true, sunk:null }', note:'RAAK! De server stuurt het resultaat naar BEIDE spelers (broadcast). Bij raak mag speler 0 nóg eens schieten.' },
+  { side:'R', text:'{ type:"fire", row:4, col:7 }', note:'Speler 1 schiet opnieuw...' },
+  { side:'L', text:'{ type:"fireResult", hit:false, nextTurn:1 }', note:'MIS. De beurt wisselt nu naar speler 1. Zo gaat het door tot één vloot (17 vakjes) volledig gezonken is.' }
+];
+var lane = document.getElementById('flow-lane');
+var flowStep = 0;
+function renderFlowStep(){
+  var s = FLOW[flowStep];
+  var row = document.createElement('div'); row.className='msgrow';
+  var left = document.createElement('div'), mid=document.createElement('div'), right=document.createElement('div');
+  mid.className='arrow'; mid.textContent = s.side==='R' ? '▶▶' : '◀◀';
+  if(s.side==='R'){ var b=document.createElement('div'); b.className='bubble toR'; b.textContent=s.text; left.appendChild(b); }
+  else { var b2=document.createElement('div'); b2.className='bubble toL'; b2.textContent=s.text; right.appendChild(b2); }
+  row.appendChild(left); row.appendChild(mid); row.appendChild(right);
+  lane.appendChild(row);
+  requestAnimationFrame(function(){ row.classList.add('show'); });
+  document.getElementById('flow-note').innerHTML = s.note;
+  document.getElementById('flow-step').textContent = flowStep+1;
+}
+document.getElementById('flow-next').addEventListener('click', function(){
+  if(flowStep >= FLOW.length){ return; }
+  renderFlowStep(); flowStep++;
+  if(flowStep>=FLOW.length){ this.textContent='✔ Klaar — bekijk gerust opnieuw'; this.disabled=true; this.style.opacity=.6; }
+});
+document.getElementById('flow-reset').addEventListener('click', function(){
+  lane.innerHTML=''; flowStep=0;
+  document.getElementById('flow-step').textContent='0';
+  document.getElementById('flow-note').innerHTML='Klik op <strong>Volgende stap</strong> om te beginnen met verbinden.';
+  var nb=document.getElementById('flow-next'); nb.textContent='▶ Volgende stap'; nb.disabled=false; nb.style.opacity=1;
+});
+
+/* ---------- quiz ---------- */
+var QUIZ = [
+  { q:'Waar leeft de échte spelstand (wie wint, waar staan schepen)?',
+    opts:['In de browser van speler 1','Op de server (server.js)','In allebei de browsers samen','In het bestand three.min.js'],
+    correct:1, fb:'Juist! De server is de scheidsrechter en bewaart de waarheid. De browser toont alleen.' },
+  { q:'Welk soort verbinding houdt de lijn open zodat de server uit zichzelf updates kan duwen?',
+    opts:['Een gewone HTTP-pagina','Een WebSocket','Een e-mail','Een database-query'],
+    correct:1, fb:'Klopt! Een WebSocket = een open, tweerichtingslijn die het hele spel blijft bestaan.' },
+  { q:'Hoeveel vakjes moet je in totaal raken om te winnen?',
+    opts:['10','15','17','25'],
+    correct:2, fb:'Ja: 5+4+3+3+2 = 17 vakjes. Vandaar "Treffers: 0 / 17".' },
+  { q:'Hoe bepaalt de server of een schot raak is?',
+    opts:['De browser stuurt "raak" mee','Hij gooit met een dobbelsteen','Hij kijkt of board[row][col] niet 0 is','Hij vraagt het aan de tegenstander'],
+    correct:2, fb:'Precies! 0 = leeg water, een scheepsnaam = raak. Daarom kan de browser het niet vervalsen.' },
+  { q:'Wat is de juiste volgorde van de fases (phase)?',
+    opts:['battle → placing → waiting','waiting → placing → battle → gameover','placing → battle → waiting','gameover → battle → placing'],
+    correct:1, fb:'Goed onthouden! Die state machine bewaakt de hele spelflow.' },
+  { q:'Wat gebeurt er met de beurt na een MIS?',
+    opts:['Dezelfde speler schiet nog eens','De beurt wisselt naar de tegenstander','Het spel eindigt','Niets, je verliest een schip'],
+    correct:1, fb:'Juist. Bij raak mag je nóg eens; bij mis wisselt de beurt. Dat regelt de fire-case.' },
+  { q:'Welke functie stuurt één bericht naar BEIDE spelers tegelijk?',
+    opts:['connect()','broadcast()','validatePlacement()','playSunk()'],
+    correct:1, fb:'Klopt! broadcast() loopt alle verbindingen in de kamer af en stuurt het JSON-pakket.' },
+  { q:'Waarom werkt het spel NIET op GitHub Pages?',
+    opts:['De HTML is te groot','GitHub Pages draait geen Node.js, dus server.js kan er niet draaien','Three.js is verboden','WebSockets bestaan niet meer'],
+    correct:1, fb:'Precies. GitHub Pages serveert alleen statische bestanden — geen draaiende server, dus geen WebSocket.' },
+  { q:'De debug-sleutel "konami" staat letterlijk in de code. Wat betekent dat?',
+    opts:['Het is onbreekbare beveiliging','Het is geen echte beveiliging: iedereen kan hem zien','De server versleutelt hem','Hij verandert elke seconde'],
+    correct:1, fb:'Juist — een leuk eierei, maar wie het bestand opent ziet de sleutel. Geen echte beveiliging.' },
+  { q:'Hoe weten server en client zeker dat ze elkaar begrijpen?',
+    opts:['Ze gebruiken dezelfde berichttypes in hun switch (msg.type)','Ze delen hetzelfde bestand','Ze bellen elkaar op','Toeval'],
+    correct:0, fb:'Top! Hetzelfde "protocol" van type-namen aan beide kanten = de afgesproken taal.' }
+];
+var answered = 0, score = 0;
+var quizEl = document.getElementById('quiz');
+document.getElementById('score-max').textContent = QUIZ.length;
+function buildQuiz(){
+  quizEl.innerHTML=''; answered=0; score=0; updateScore();
+  document.getElementById('quiz-final').style.display='none';
+  QUIZ.forEach(function(item, qi){
+    var box=document.createElement('div'); box.className='q';
+    var num=document.createElement('div'); num.className='qnum'; num.textContent='VRAAG '+(qi+1);
+    var txt=document.createElement('div'); txt.className='qtext'; txt.textContent=item.q;
+    box.appendChild(num); box.appendChild(txt);
+    var fb=document.createElement('div'); fb.className='qfb';
+    item.opts.forEach(function(opt, oi){
+      var b=document.createElement('button'); b.className='opt'; b.textContent=opt;
+      b.addEventListener('click', function(){
+        if(box.dataset.done) return;
+        box.dataset.done='1'; answered++;
+        var btns=box.querySelectorAll('.opt');
+        btns.forEach(function(x){ x.disabled=true; });
+        if(oi===item.correct){
+          b.classList.add('correct'); score++;
+          fb.className='qfb good'; fb.textContent='✔ '+item.fb;
+        } else {
+          b.classList.add('wrong');
+          btns[item.correct].classList.add('correct');
+          fb.className='qfb bad'; fb.textContent='✘ Niet helemaal. '+item.fb;
+        }
+        updateScore();
+        if(answered===QUIZ.length) showFinal();
+      });
+      box.appendChild(b);
+    });
+    box.appendChild(fb);
+    quizEl.appendChild(box);
+  });
+}
+function updateScore(){
+  document.getElementById('score-num').textContent=score;
+  var pct = QUIZ.length ? (answered/QUIZ.length*100) : 0;
+  document.getElementById('score-fill').style.width=pct+'%';
+  var hint=document.getElementById('score-hint');
+  hint.textContent = answered===0 ? 'Maak de oefeningen onderaan →'
+    : answered<QUIZ.length ? (answered+' van '+QUIZ.length+' beantwoord')
+    : 'Alle vragen gedaan! 🎉';
+}
+function showFinal(){
+  var box=document.getElementById('quiz-final');
+  var t=document.getElementById('final-title'), p=document.getElementById('final-text');
+  box.style.display='block';
+  if(score===QUIZ.length){ t.textContent='🏆 Perfect — '+score+'/'+QUIZ.length+'!'; p.textContent='Je begrijpt de hele architectuur: client–server, WebSocket-protocol, fases en het rooster. Missie geslaagd, kapitein.'; box.className='card ok'; }
+  else if(score>=QUIZ.length-3){ t.textContent='⚓ Sterk — '+score+'/'+QUIZ.length; p.textContent='Bijna alles zit erin. Lees de blokken bij de paar gemiste vragen nog eens en je hebt het helemaal.'; box.className='card ok'; }
+  else { t.textContent='🌊 Goed begin — '+score+'/'+QUIZ.length; p.textContent='Scroll terug naar Deel 1 (berichtenstroom) en Deel 4 (sleutelconcepten). Speel de stroom-demo nog een keer af en probeer opnieuw.'; box.className='card accent'; }
+  box.scrollIntoView({behavior:'smooth', block:'center'});
+}
+document.getElementById('quiz-again').addEventListener('click', buildQuiz);
+buildQuiz();
+</script>
+</body>
+</html>
